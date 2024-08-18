@@ -42,7 +42,7 @@ impl UnaryRpcServer {
         {
             // let inner = Arc::new(inner);
             for (path, method) in methods {
-                println!("UnaryRpc registered : 【 {path} 】 {:p} . ", method);
+                println!("UnaryRpc registered:【 {path} 】{:p}", method);
             }
 
             Self {
@@ -246,16 +246,17 @@ macro_rules! init_rpc_methods {
     // let biz = &hello::INSTANCE;
     // map.insert(biz.path(), Arc::new(|r| Box::pin(biz.on_req(r))));
 
-    ($($m: expr),+) => {
-
-        static METHOD_MAP_INIT: std::sync::Once = std::sync::Once::new();
-        static mut METHOD_MAP: Option<std::collections::HashMap<&'static str, krpc::server::ArcUnaryFnPointer>> = None;
-        fn rpc_methods() -> &'static std::collections::HashMap<&'static str, krpc::server::ArcUnaryFnPointer> {
+    ($($unary_fn: expr),+) => {
+        use krpc::server::UnaryFn;
+        type FnMap = std::collections::HashMap<&'static str, krpc::server::ArcUnaryFnPointer>;
+        const METHOD_MAP_INIT: std::sync::Once = std::sync::Once::new();
+        static mut METHOD_MAP: Option<FnMap> = None;
+        fn rpc_methods() -> &'static FnMap {
             unsafe {
                 METHOD_MAP_INIT.call_once(|| {
-                    let mut map:std::collections::HashMap<&'static str, krpc::server::ArcUnaryFnPointer> = std::collections::HashMap::new();
+                    let mut map:FnMap = std::collections::HashMap::new();
                     $(
-                        $m.register(&mut map);
+                        $unary_fn.register(&mut map);
                     )+
                     METHOD_MAP = Some(map);
                 });
