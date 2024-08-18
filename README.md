@@ -28,7 +28,37 @@ impl UnaryFn for HelloFn {
 }
 ```
 
+
+
 ##  运行
+
+启动服务
+```rust
+use krpc::{
+    init_rpc_methods,
+    server::{UnaryFn, UnaryRpcServer},
+};
+use tonic::transport::Server;
+
+//注册所有的impl UnaryFn
+init_rpc_methods!(demo::FN, hello::FN);
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // let addr = "[::1]:50051".parse()?;
+    let addr = "0.0.0.0:50051".parse()?;
+    println!("listen on : {}/{}", addr, krpc::KRPC_APP_NAME);
+
+    Server::builder()
+        .add_service(UnaryRpcServer::new(rpc_methods()))
+        .serve(addr)
+        .await?;
+
+    Ok(())
+}
+
+```
+
 
 ```bash
 KRPC_APP_NAME=youApp cargo run

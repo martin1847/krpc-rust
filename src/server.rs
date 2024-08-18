@@ -42,7 +42,7 @@ impl UnaryRpcServer {
         {
             // let inner = Arc::new(inner);
             for (path, method) in methods {
-                println!("UnaryRpcServer registered : 【 {path} 】 {:p} . ", method);
+                println!("UnaryRpc registered : 【 {path} 】 {:p} . ", method);
             }
 
             Self {
