@@ -2,7 +2,6 @@ pub mod proto;
 pub mod server;
 
 use proto::{Out, OutputProto};
-use server::UnaryRpcServer;
 use tonic::{Response, Status};
 
 #[allow(dead_code)]
@@ -40,6 +39,9 @@ pub const KRPC_APP_NAME : &'static str = env!("KRPC_APP_NAME");
 //         const NAME: &'static str = APP;
 //     }
 // }
+
+
+
 
 
 

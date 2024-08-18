@@ -229,3 +229,41 @@ macro_rules! api_path {
         krpc::concat_cst!("/", &krpc::KRPC_APP_NAME, $name);
     };
 }
+
+
+#[macro_export]
+macro_rules! init_rpc_methods {
+    
+    // hello::INSTANCE.register(&mut map);
+    // let a = vec![captcha::INSTANCE,hello::INSTANCE];
+    
+
+    // fn register<T: UnaryFn>(map: &mut HashMap<&'static str, ArcUnaryFnPointer>, biz: &'static T) {
+    //     map.insert(biz.path(), Arc::new( |r| Box::pin(biz.on_req(r))));
+    // }
+    // // 注册所有的bizfn(rpc method)
+    
+    // 下面写法可以直接UnaryFn声明async on_req.
+    // let biz = &captcha::INSTANCE;
+    // map.insert(biz.path(), Arc::new(|r| Box::pin(biz.on_req(r))));
+    // let biz = &hello::INSTANCE;
+    // map.insert(biz.path(), Arc::new(|r| Box::pin(biz.on_req(r))));
+
+    ($($m: expr),+) => {
+
+        static METHOD_MAP_INIT: std::sync::Once = std::sync::Once::new();
+        static mut METHOD_MAP: Option<std::collections::HashMap<&'static str, krpc::server::ArcUnaryFnPointer>> = None;
+        fn rpc_methods() -> &'static std::collections::HashMap<&'static str, krpc::server::ArcUnaryFnPointer> {
+            unsafe {
+                METHOD_MAP_INIT.call_once(|| {
+                    let mut map:std::collections::HashMap<&'static str, krpc::server::ArcUnaryFnPointer> = std::collections::HashMap::new();
+                    $(
+                        $m.register(&mut map);
+                    )+
+                    METHOD_MAP = Some(map);
+                });
+                METHOD_MAP.as_ref().unwrap()
+            }
+        }
+    }
+}
