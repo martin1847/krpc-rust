@@ -21,9 +21,9 @@ pub trait UnaryFn: Send + Sync + 'static {
 
     fn on_req(&self, request: UnaryRequest) -> impl Future<Output = UnaryResponse> + Send;
 
-    fn register(&'static self, methods: &mut HashMap<&'static str, ArcUnaryFnPointer>) {
-        methods.insert(self.path(), Arc::new(|req| Box::pin(self.on_req(req))));
-    }
+    // fn register(&'static self, methods: &mut HashMap<&'static str, ArcUnaryFnPointer>) {
+    //     methods.insert(self.path(), Arc::new(|req| Box::pin(self.on_req(req))));
+    // }
 }
 
 // static  METEHODS :&'static HashMap<&'static str, AsyncUnaryFn> ;
@@ -42,7 +42,7 @@ impl UnaryRpcServer {
         {
             // let inner = Arc::new(inner);
             for (path, method) in methods {
-                println!("UnaryRpc registered:【 {path} 】{:p}", method);
+                println!("UnaryRpc Registered {:p}【{path}】", method);
             }
 
             Self {
@@ -255,8 +255,14 @@ macro_rules! init_rpc_methods {
             unsafe {
                 METHOD_MAP_INIT.call_once(|| {
                     let mut map:FnMap = std::collections::HashMap::new();
+
+                    // fn reg<FN:UnaryFn>(&'static FN, methods: &mut FnMap) {
+                    //     methods.insert(FN.path(), Arc::new(|req| Box::pin(FN.on_req(req))));
+                    // }
+
                     $(
-                        $unary_fn.register(&mut map);
+                        map.insert($unary_fn.path(), std::sync::Arc::new(|r| Box::pin($unary_fn.on_req(r))));
+                        // reg($unary_fn,&mut map);
                     )+
                     METHOD_MAP = Some(map);
                 });
