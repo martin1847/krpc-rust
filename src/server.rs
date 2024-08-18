@@ -184,11 +184,48 @@ impl tonic::server::NamedService for UnaryRpcServer  {
 
 
 
-// #[macro_export]
-// macro_rules! krpc_app_name {
-//     ($name:expr) => {
-//         impl tonic::server::NamedService for krpc::server::UnaryRpcServer {
-//             const NAME: &'static str = $name;
-//         }
-//     };
-// }
+#[macro_export]
+macro_rules! concat_cst {
+    ($($s: expr),+) => {{
+        const STRS: &[&str] = &[
+            $($s,)+
+        ];
+
+        const TOTAL_LEN: usize = {
+            let mut ans = 0;
+            let mut arr = STRS;
+            while let [x, xs @ ..] = arr {
+                ans += x.len();
+                arr = xs;
+            }
+            ans
+        };
+
+        const CONST_STR_BUF: [u8; TOTAL_LEN] = {
+            let mut buf: [u8; TOTAL_LEN] = [0; TOTAL_LEN];
+            let mut cur: usize = 0;
+            let mut arr = STRS;
+            while let [x, xs @ ..] = arr {
+                let bytes = x.as_bytes();
+                let mut i = 0;
+                while i < bytes.len() {
+                    buf[cur] = bytes[i];
+                    i += 1;
+                    cur += 1;
+                }
+                arr = xs;
+            }
+            buf
+        };
+
+        unsafe { ::core::str::from_utf8_unchecked(&CONST_STR_BUF) }
+    }};
+}
+
+
+#[macro_export]
+macro_rules! api_path {
+    ($name:expr) => {
+        krpc::concat_cst!("/", &krpc::KRPC_APP_NAME, $name);
+    };
+}
