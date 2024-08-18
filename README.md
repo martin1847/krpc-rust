@@ -27,3 +27,9 @@ impl UnaryFn for HelloFn {
     }
 }
 ```
+
+##  运行
+
+```bash
+KRPC_APP_NAME=youApp cargo run
+```

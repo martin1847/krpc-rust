@@ -2,6 +2,7 @@ pub mod proto;
 pub mod server;
 
 use proto::{Out, OutputProto};
+use server::UnaryRpcServer;
 use tonic::{Response, Status};
 
 #[allow(dead_code)]
@@ -29,10 +30,24 @@ pub fn out_bytes(data: Vec<u8>) -> Result<Response<OutputProto>, Status> {
     }))
 }
 
+
+pub const KRPC_APP_NAME : &'static str = env!("KRPC_APP_NAME");
+// pub const KRPC_APP_NAME : &'static str = option_env!("APP_NAME");
+
+
+// pub fn SET_APP_NAME(APP:&'static str ){
+//     impl tonic::server::NamedService for UnaryRpcServer {
+//         const NAME: &'static str = APP;
+//     }
+// }
+
+
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
+    // krpc_app_name!("123");
     pub fn add(left: u64, right: u64) -> u64 {
         left + right
     }

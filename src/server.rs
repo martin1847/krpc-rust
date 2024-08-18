@@ -1,5 +1,5 @@
 #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
-use crate::proto;
+use crate::{proto, KRPC_APP_NAME};
 use std::collections::HashMap;
 use tonic::codegen::*;
 
@@ -178,6 +178,17 @@ impl Clone for UnaryRpcServer {
         }
     }
 }
-// impl<T: UnaryRpc> tonic::server::NamedService for UnaryRpcServer<T> {
-//     const NAME: &'static str = "-external";
+impl tonic::server::NamedService for UnaryRpcServer  {
+    const NAME: &'static str = &KRPC_APP_NAME;
+}
+
+
+
+// #[macro_export]
+// macro_rules! krpc_app_name {
+//     ($name:expr) => {
+//         impl tonic::server::NamedService for krpc::server::UnaryRpcServer {
+//             const NAME: &'static str = $name;
+//         }
+//     };
 // }
