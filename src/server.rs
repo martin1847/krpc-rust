@@ -19,10 +19,7 @@ pub trait UnaryFn: Send + Sync + 'static {
     //     request: UnaryRequest,
     // ) -> UnaryResponse ;
 
-    fn on_req(
-        &self,
-        request: UnaryRequest,
-    ) -> impl Future<Output = UnaryResponse> + Send;
+    fn on_req(&self, request: UnaryRequest) -> impl Future<Output = UnaryResponse> + Send;
 
     fn register(&'static self, methods: &mut HashMap<&'static str, ArcUnaryFnPointer>) {
         methods.insert(self.path(), Arc::new(|req| Box::pin(self.on_req(req))));
@@ -44,6 +41,10 @@ impl UnaryRpcServer {
     pub fn new(methods: &'static HashMap<&'static str, ArcUnaryFnPointer>) -> Self {
         {
             // let inner = Arc::new(inner);
+            for (path, method) in methods {
+                println!("UnaryRpcServer registered : 【 {path} 】 {:p} . ", method);
+            }
+
             Self {
                 methods,
                 accept_compression_encodings: Default::default(),
@@ -178,11 +179,9 @@ impl Clone for UnaryRpcServer {
         }
     }
 }
-impl tonic::server::NamedService for UnaryRpcServer  {
+impl tonic::server::NamedService for UnaryRpcServer {
     const NAME: &'static str = &KRPC_APP_NAME;
 }
-
-
 
 #[macro_export]
 macro_rules! concat_cst {
@@ -222,7 +221,6 @@ macro_rules! concat_cst {
     }};
 }
 
-
 #[macro_export]
 macro_rules! api_path {
     ($name:expr) => {
@@ -230,19 +228,18 @@ macro_rules! api_path {
     };
 }
 
-
 #[macro_export]
 macro_rules! init_rpc_methods {
-    
+
     // hello::INSTANCE.register(&mut map);
     // let a = vec![captcha::INSTANCE,hello::INSTANCE];
-    
+
 
     // fn register<T: UnaryFn>(map: &mut HashMap<&'static str, ArcUnaryFnPointer>, biz: &'static T) {
     //     map.insert(biz.path(), Arc::new( |r| Box::pin(biz.on_req(r))));
     // }
     // // 注册所有的bizfn(rpc method)
-    
+
     // 下面写法可以直接UnaryFn声明async on_req.
     // let biz = &captcha::INSTANCE;
     // map.insert(biz.path(), Arc::new(|r| Box::pin(biz.on_req(r))));
