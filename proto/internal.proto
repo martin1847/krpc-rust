@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+//package tech.krpc;
+option go_package = "google.golang.org/krpc";
+
+service UnaryRpc {
+  rpc call (InputProto) returns (OutputProto);
+  //rpc call1 (InputProto) returns (OutputProto);
+  //rpc call2 (InputProto) returns (OutputProto);
+}
+
+
+message InputProto {
+  // int32 e = 1; // default from SerialEnum.JSON = 0 , not allow modify
+  string json = 2;
+}
+
+// same with the server side
+message OutputProto {
+  //google.rpc.Code  see https://github.com/googleapis/googleapis/blob/master/google/rpc/code.proto
+  int32 code = 1;
+
+
+  // like union Data in C++
+  oneof data {
+	  string error = 2;//detail  message if there is a error ,otherwise  null
+	  string json = 3;////for json , txt like serial
+	  bytes bs = 4; // ByteString, others Serialization transfer by protobuf
+  }
+}

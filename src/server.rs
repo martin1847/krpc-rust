@@ -1,0 +1,183 @@
+#![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
+use crate::proto;
+use std::collections::HashMap;
+use tonic::codegen::*;
+
+pub type UnaryRequest = tonic::Request<proto::InputProto>;
+pub type UnaryResponse = Result<tonic::Response<proto::OutputProto>, tonic::Status>;
+
+type BoxedFuture = Pin<Box<dyn Future<Output = UnaryResponse> + Send + 'static>>;
+pub type ArcUnaryFnPointer = Arc<dyn Fn(UnaryRequest) -> BoxedFuture + Send + Sync>;
+
+/// Generated trait containing gRPC methods that should be implemented for use with UnaryRpcServer.
+// #[async_trait]
+pub trait UnaryFn: Send + Sync + 'static {
+    fn path(&self) -> &'static str;
+
+    // async fn on_req(
+    //     &self,
+    //     request: UnaryRequest,
+    // ) -> UnaryResponse ;
+
+    fn on_req(
+        &self,
+        request: UnaryRequest,
+    ) -> impl Future<Output = UnaryResponse> + Send;
+
+    fn register(&'static self, methods: &mut HashMap<&'static str, ArcUnaryFnPointer>) {
+        methods.insert(self.path(), Arc::new(|req| Box::pin(self.on_req(req))));
+    }
+}
+
+// static  METEHODS :&'static HashMap<&'static str, AsyncUnaryFn> ;
+
+// #[derive(Debug)]
+pub struct UnaryRpcServer {
+    // inner: Arc<T>,
+    methods: &'static HashMap<&'static str, ArcUnaryFnPointer>,
+    accept_compression_encodings: EnabledCompressionEncodings,
+    send_compression_encodings: EnabledCompressionEncodings,
+    max_decoding_message_size: Option<usize>,
+    max_encoding_message_size: Option<usize>,
+}
+impl UnaryRpcServer {
+    pub fn new(methods: &'static HashMap<&'static str, ArcUnaryFnPointer>) -> Self {
+        {
+            // let inner = Arc::new(inner);
+            Self {
+                methods,
+                accept_compression_encodings: Default::default(),
+                send_compression_encodings: Default::default(),
+                max_decoding_message_size: None,
+                max_encoding_message_size: None,
+            }
+        }
+    }
+
+    // pub fn with_interceptor<F>(
+    //     inner: T,
+    //     interceptor: F,
+    // ) -> InterceptedService<Self, F>
+    // where
+    //     F: tonic::service::Interceptor,
+    // {
+    //     InterceptedService::new(Self::new(inner), interceptor)
+    // }
+
+    /// Enable decompressing requests with the given encoding.
+    #[must_use]
+    pub fn accept_compressed(mut self, encoding: CompressionEncoding) -> Self {
+        self.accept_compression_encodings.enable(encoding);
+        self
+    }
+    /// Compress responses with the given encoding, if the client supports it.
+    #[must_use]
+    pub fn send_compressed(mut self, encoding: CompressionEncoding) -> Self {
+        self.send_compression_encodings.enable(encoding);
+        self
+    }
+    /// Limits the maximum size of a decoded message.
+    ///
+    /// Default: `4MB`
+    #[must_use]
+    pub fn max_decoding_message_size(mut self, limit: usize) -> Self {
+        self.max_decoding_message_size = Some(limit);
+        self
+    }
+    /// Limits the maximum size of an encoded message.
+    ///
+    /// Default: `usize::MAX`
+    #[must_use]
+    pub fn max_encoding_message_size(mut self, limit: usize) -> Self {
+        self.max_encoding_message_size = Some(limit);
+        self
+    }
+}
+
+// #[allow(non_camel_case_types)]
+struct InnerSvc(ArcUnaryFnPointer);
+impl tonic::server::UnaryService<proto::InputProto> for InnerSvc {
+    type Response = proto::OutputProto;
+    type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+    fn call(&mut self, request: tonic::Request<proto::InputProto>) -> Self::Future {
+        let async_fn = Arc::clone(&self.0);
+        // let inner = rpc.clone()
+        let fut = async move { async_fn(request).await };
+        Box::pin(fut)
+    }
+}
+
+impl<B> tonic::codegen::Service<http::Request<B>> for UnaryRpcServer
+where
+    // T: UnaryRpc,
+    B: Body + Send + 'static,
+    B::Error: Into<StdError> + Send + 'static,
+{
+    type Response = http::Response<tonic::body::BoxBody>;
+    type Error = std::convert::Infallible;
+    type Future = BoxFuture<Self::Response, Self::Error>;
+    fn poll_ready(&mut self, _cx: &mut Context<'_>) -> Poll<std::result::Result<(), Self::Error>> {
+        Poll::Ready(Ok(()))
+    }
+    fn call(&mut self, req: http::Request<B>) -> Self::Future {
+        // let methods:&'static HashMap<&'static str, AsyncUnaryFn> = global_methods();
+        match self.methods.get(req.uri().path()) {
+            Some(arc_fn) => {
+                let accept_compression_encodings = self.accept_compression_encodings;
+                let send_compression_encodings = self.send_compression_encodings;
+                let max_decoding_message_size = self.max_decoding_message_size;
+                let max_encoding_message_size = self.max_encoding_message_size;
+                // let inner = rpc_method.clone().as_ref().as_any().downcast_ref::<T>;
+                let fut = async move {
+                    // let method = ;
+                    let codec = tonic::codec::ProstCodec::default();
+                    let mut grpc = tonic::server::Grpc::new(codec)
+                        .apply_compression_config(
+                            accept_compression_encodings,
+                            send_compression_encodings,
+                        )
+                        .apply_max_message_size_config(
+                            max_decoding_message_size,
+                            max_encoding_message_size,
+                        );
+                    let res = grpc.unary(InnerSvc(arc_fn.clone()), req).await;
+                    Ok(res)
+                };
+                Box::pin(fut)
+            }
+            None => Box::pin(async move {
+                Ok(http::Response::builder()
+                    .status(200)
+                    .header("grpc-status", tonic::Code::Unimplemented as i32)
+                    .header(
+                        http::header::CONTENT_TYPE,
+                        tonic::metadata::GRPC_CONTENT_TYPE,
+                    )
+                    .body(empty_body())
+                    .unwrap())
+            }),
+        }
+
+        // match req.uri().path() {
+        //     // self.inner.Arc.
+        //     "/-external/Captcha/drawJpg"
+        //      =>
+        //     _ =>
+        // }
+    }
+}
+impl Clone for UnaryRpcServer {
+    fn clone(&self) -> Self {
+        let methods = self.methods;
+        Self {
+            methods,
+            accept_compression_encodings: self.accept_compression_encodings,
+            send_compression_encodings: self.send_compression_encodings,
+            max_decoding_message_size: self.max_decoding_message_size,
+            max_encoding_message_size: self.max_encoding_message_size,
+        }
+    }
+}
+// impl<T: UnaryRpc> tonic::server::NamedService for UnaryRpcServer<T> {
+//     const NAME: &'static str = "-external";
+// }
