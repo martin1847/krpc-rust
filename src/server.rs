@@ -252,6 +252,30 @@ macro_rules! concat_cst_with_mod {
 //     };
 // }
 
+// #[macro_export]
+// macro_rules! reg_unary_fn {
+//     () => {
+
+//         // // 获取模块名 , 目前固定支持前两级目录
+//         // src/image/captcha.rs
+//         //Image
+//         const SVC_NAME: &str  = const_str::convert_ascii_case!(upper_camel,  const_str::split!(module_path!(), "::")[1]);
+//         //captcha
+//         const METHOD_NAME: &str  = const_str::split!(module_path!(), "::")[2];
+    
+//         const API_PATH: &'static str = krpc::concat_cst!("/", &krpc::KRPC_APP_NAME,"/",&SVC_NAME,"/",&METHOD_NAME);
+//         const FN_NAME: &'static str  = krpc::concat_cst!(const_str::convert_ascii_case!(upper_camel, &METHOD_NAME),"Fn");
+        
+//         let struct_name: identconv::Ident = &FN_NAME.into();
+
+//         // identconv::pascal!($UnaryFn, |ident| {
+//         pub struct struct_name(pub &'static str);
+//         pub const FN: struct_name = struct_name(&API_PATH);
+
+//         // krpc::make_unary_fn!(&FN_NAME);
+//     };
+// }
+
 #[macro_export]
 macro_rules! reg_api_path {
     ($UnaryFn:ident) => {
