@@ -1,5 +1,5 @@
 pub mod proto;
-pub mod server;
+pub mod svr;
 
 use proto::{Out, OutputProto};
 use tonic::{Response, Status};

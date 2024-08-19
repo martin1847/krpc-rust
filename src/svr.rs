@@ -304,8 +304,8 @@ macro_rules! init_rpc_methods {
     // map.insert(biz.path(), Arc::new(|r| Box::pin(biz.on_req(r))));
 
     ($($unary_fn: expr),+) => {
-        use krpc::server::UnaryFn;
-        type FnMap = std::collections::HashMap<&'static str, krpc::server::ArcUnaryFnPointer>;
+        use krpc::svr::UnaryFn;
+        type FnMap = std::collections::HashMap<&'static str, krpc::svr::ArcUnaryFnPointer>;
         const METHOD_MAP_INIT: std::sync::Once = std::sync::Once::new();
         static mut METHOD_MAP: Option<FnMap> = None;
         fn rpc_methods() -> &'static FnMap {
