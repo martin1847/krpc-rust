@@ -184,10 +184,23 @@ impl tonic::server::NamedService for UnaryRpcServer {
 }
 
 #[macro_export]
-macro_rules! concat_cst {
+macro_rules! concat_cst_with_mod {
     ($($s: expr),+) => {{
+
+        // // 获取模块名 , 目前固定支持前两级目录
+        // src/image/captcha.rs
+        //Image
+        const SVC_NAME: &str  = const_str::convert_ascii_case!(upper_camel,  const_str::split!(module_path!(), "::")[1]);
+        //captcha
+        const METHOD_NAME: &str  = const_str::split!(module_path!(), "::")[2];
+    
+
         const STRS: &[&str] = &[
             $($s,)+
+            "/",
+            SVC_NAME,
+            "/",
+            METHOD_NAME
         ];
 
         const TOTAL_LEN: usize = {
@@ -221,10 +234,30 @@ macro_rules! concat_cst {
     }};
 }
 
+// #[macro_export]
+// macro_rules! current_module_name {
+//     () => {{
+//         let path = module_path!();
+//         let parts: Vec<&str> = path.split("::").collect();
+//         *parts.last().unwrap() // 获取模块名,没法转换成const
+//     }};
+// }
+// const MODULE_PATH: &'static str = module_path!();
+// const LIB_NAME: &'static str = const_str::split!(MODULE_PATH, "::")[0];
+
+// #[macro_export]
+// macro_rules! mod_as_api_path {
+//     () => {
+//         const API_PATH: &'static str = krpc::concat_cst!("/", &krpc::KRPC_APP_NAME, &super::SVC_PATH);
+//     };
+// }
+
 #[macro_export]
-macro_rules! api_path {
-    ($name:expr) => {
-        krpc::concat_cst!("/", &krpc::KRPC_APP_NAME, $name);
+macro_rules! reg_api_path {
+    ($UnaryFn:ident) => {
+        pub const API_PATH: &'static str = krpc::concat_cst_with_mod!("/", &krpc::KRPC_APP_NAME);
+        pub const FN: $UnaryFn = $UnaryFn;
+        pub struct $UnaryFn;
     };
 }
 

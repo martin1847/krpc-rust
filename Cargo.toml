@@ -6,8 +6,9 @@ license = "Apache-2.0"
 authors = ["Martin Cong <cyy2cyy@gmail.com>"]
 
 [dependencies]
+const-str = "0.5.7"
 prost = "0.13.1"
-tokio = { version = "1.39.2", features = ["macros", "rt-multi-thread"] }
+tokio = { version = "1.39.3", features = ["macros", "rt-multi-thread"] }
 tonic = "0.12.1"
 
 [build-dependencies]
