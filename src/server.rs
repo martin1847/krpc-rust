@@ -277,11 +277,11 @@ macro_rules! concat_cst_with_mod {
 // }
 
 #[macro_export]
-macro_rules! reg_api_path {
-    ($UnaryFn:ident) => {
+macro_rules! reg_my_unary_fn {
+    () => {
         pub const API_PATH: &'static str = krpc::concat_cst_with_mod!("/", &krpc::KRPC_APP_NAME);
-        pub const FN: $UnaryFn = $UnaryFn;
-        pub struct $UnaryFn;
+        pub const FN: My = My;
+        pub struct My;
     };
 }
 
