@@ -12,7 +12,7 @@ pub type ArcUnaryFnPointer = Arc<dyn Fn(UnaryRequest) -> BoxedFuture + Send + Sy
 /// Generated trait containing gRPC methods that should be implemented for use with UnaryRpcServer.
 // #[async_trait]
 pub trait UnaryFn: Send + Sync + 'static {
-    fn path(&self) -> &'static str;
+    // fn path(&self) -> &'static str;
 
     // async fn on_req(
     //     &self,
@@ -279,9 +279,9 @@ macro_rules! concat_cst_with_mod {
 #[macro_export]
 macro_rules! reg_my_unary_fn {
     () => {
-        pub const API_PATH: &'static str = krpc::concat_cst_with_mod!("/", &krpc::KRPC_APP_NAME);
-        pub const FN: My = My;
-        pub struct My;
+        const API_PATH: &'static str = krpc::concat_cst_with_mod!("/", &krpc::KRPC_APP_NAME);
+        pub const FN: My = My(&API_PATH);
+        pub struct My(pub &'static str);
     };
 }
 
@@ -318,7 +318,7 @@ macro_rules! init_rpc_methods {
                     // }
 
                     $(
-                        map.insert($unary_fn.path(), std::sync::Arc::new(|r| Box::pin($unary_fn.on_req(r))));
+                        map.insert($unary_fn.0, std::sync::Arc::new(|r| Box::pin($unary_fn.on_req(r))));
                         // reg($unary_fn,&mut map);
                     )+
                     METHOD_MAP = Some(map);
