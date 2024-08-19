@@ -13,50 +13,42 @@
 ## 用法
 
 ```rust
-pub const INSTANCE: HelloFn = HelloFn {};
-pub struct HelloFn {}
-const API_PATH: &'static str = concat_cst!("/", &APP_NAME, "/Demo/hello");
-impl UnaryFn for HelloFn {
-    fn path(&self) -> &'static str {
-        &API_PATH
-    }
+//src/demo/hello.rs
+//rpcurl $REMOTE/$KRPC_APP_NAME/Demo/hello  -d '"Martin你好"'
+// 1. 注册一元函数
+krpc::reg_my_fn!();
 
+// 2. 实现
+impl UnaryFn for My {
     async fn on_req(&self, request: UnaryRequest) -> UnaryResponse {
-        let input = request.into_inner().json;
+        let json_quoted_string = request.into_inner().json;
+        let input = crate::util::remove_quotes(&json_quoted_string);
         out_json(format!("\"Hello 你好 :  {}, this is Rust !\"", input))
     }
 }
 ```
 
-
-
 ##  运行
 
-启动服务
-```rust
-use krpc::{
-    init_rpc_methods,
-    server::{UnaryFn, UnaryRpcServer},
-};
-use tonic::transport::Server;
 
-//注册所有的impl UnaryFn
-init_rpc_methods!(demo::FN, hello::FN);
+```rust
+// src/main.rs
+// 1. 引入你的fn
+use demo::hello;
+
+// 2. 统一配置发布
+krpc::pub_fns!(&hello::FN,&other::FN);
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // let addr = "[::1]:50051".parse()?;
-    let addr = "0.0.0.0:50051".parse()?;
-    println!("listen on : {}/{}", addr, krpc::KRPC_APP_NAME);
 
-    Server::builder()
-        .add_service(UnaryRpcServer::new(rpc_methods()))
-        .serve(addr)
-        .await?;
+    // 3. 启动服务
+    //default "0.0.0.0:50051"
+    krpc::start_server!();
 
     Ok(())
-}
 
+}
 ```
 
 

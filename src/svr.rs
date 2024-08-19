@@ -31,22 +31,22 @@ pub trait UnaryFn: Send + Sync + 'static {
 // #[derive(Debug)]
 pub struct UnaryRpcServer {
     // inner: Arc<T>,
-    methods: &'static HashMap<&'static str, ArcUnaryFnPointer>,
+    fn_map: &'static HashMap<&'static str, ArcUnaryFnPointer>,
     accept_compression_encodings: EnabledCompressionEncodings,
     send_compression_encodings: EnabledCompressionEncodings,
     max_decoding_message_size: Option<usize>,
     max_encoding_message_size: Option<usize>,
 }
 impl UnaryRpcServer {
-    pub fn new(methods: &'static HashMap<&'static str, ArcUnaryFnPointer>) -> Self {
+    pub fn new(fn_map: &'static HashMap<&'static str, ArcUnaryFnPointer>) -> Self {
         {
             // let inner = Arc::new(inner);
-            for (path, method) in methods {
-                println!("UnaryRpc Registered {:p}【{path}】", method);
+            for (path, f) in fn_map {
+                println!("UnaryRpc Registered {:p}【 {path} 】", f);
             }
 
             Self {
-                methods,
+                fn_map,
                 accept_compression_encodings: Default::default(),
                 send_compression_encodings: Default::default(),
                 max_decoding_message_size: None,
@@ -122,7 +122,7 @@ where
     }
     fn call(&mut self, req: http::Request<B>) -> Self::Future {
         // let methods:&'static HashMap<&'static str, AsyncUnaryFn> = global_methods();
-        match self.methods.get(req.uri().path()) {
+        match self.fn_map.get(req.uri().path()) {
             Some(arc_fn) => {
                 let accept_compression_encodings = self.accept_compression_encodings;
                 let send_compression_encodings = self.send_compression_encodings;
@@ -169,9 +169,9 @@ where
 }
 impl Clone for UnaryRpcServer {
     fn clone(&self) -> Self {
-        let methods = self.methods;
+        let fn_map = self.fn_map;
         Self {
-            methods,
+            fn_map,
             accept_compression_encodings: self.accept_compression_encodings,
             send_compression_encodings: self.send_compression_encodings,
             max_decoding_message_size: self.max_decoding_message_size,
@@ -231,62 +231,25 @@ macro_rules! concat_cst_with_mod {
         };
 
         unsafe { ::core::str::from_utf8_unchecked(&CONST_STR_BUF) }
-    }};
+    }}
 }
 
-// #[macro_export]
-// macro_rules! current_module_name {
-//     () => {{
-//         let path = module_path!();
-//         let parts: Vec<&str> = path.split("::").collect();
-//         *parts.last().unwrap() // 获取模块名,没法转换成const
-//     }};
-// }
-// const MODULE_PATH: &'static str = module_path!();
-// const LIB_NAME: &'static str = const_str::split!(MODULE_PATH, "::")[0];
-
-// #[macro_export]
-// macro_rules! mod_as_api_path {
-//     () => {
-//         const API_PATH: &'static str = krpc::concat_cst!("/", &krpc::KRPC_APP_NAME, &super::SVC_PATH);
-//     };
-// }
-
-// #[macro_export]
-// macro_rules! reg_unary_fn {
-//     () => {
-
-//         // // 获取模块名 , 目前固定支持前两级目录
-//         // src/image/captcha.rs
-//         //Image
-//         const SVC_NAME: &str  = const_str::convert_ascii_case!(upper_camel,  const_str::split!(module_path!(), "::")[1]);
-//         //captcha
-//         const METHOD_NAME: &str  = const_str::split!(module_path!(), "::")[2];
-    
-//         const API_PATH: &'static str = krpc::concat_cst!("/", &krpc::KRPC_APP_NAME,"/",&SVC_NAME,"/",&METHOD_NAME);
-//         const FN_NAME: &'static str  = krpc::concat_cst!(const_str::convert_ascii_case!(upper_camel, &METHOD_NAME),"Fn");
-        
-//         let struct_name: identconv::Ident = &FN_NAME.into();
-
-//         // identconv::pascal!($UnaryFn, |ident| {
-//         pub struct struct_name(pub &'static str);
-//         pub const FN: struct_name = struct_name(&API_PATH);
-
-//         // krpc::make_unary_fn!(&FN_NAME);
-//     };
-// }
-
 #[macro_export]
-macro_rules! reg_my_unary_fn {
+macro_rules! reg_my_fn {
     () => {
+        use krpc::{
+            out_bytes, out_error, out_json,
+            svr::{UnaryFn, UnaryRequest, UnaryResponse},
+        };
+
         const API_PATH: &'static str = krpc::concat_cst_with_mod!("/", &krpc::KRPC_APP_NAME);
         pub const FN: My = My(&API_PATH);
         pub struct My(pub &'static str);
-    };
+    }
 }
 
 #[macro_export]
-macro_rules! init_rpc_methods {
+macro_rules! pub_fns {
 
     // hello::INSTANCE.register(&mut map);
     // let a = vec![captcha::INSTANCE,hello::INSTANCE];
@@ -304,27 +267,49 @@ macro_rules! init_rpc_methods {
     // map.insert(biz.path(), Arc::new(|r| Box::pin(biz.on_req(r))));
 
     ($($unary_fn: expr),+) => {
-        use krpc::svr::UnaryFn;
+
         type FnMap = std::collections::HashMap<&'static str, krpc::svr::ArcUnaryFnPointer>;
-        const METHOD_MAP_INIT: std::sync::Once = std::sync::Once::new();
-        static mut METHOD_MAP: Option<FnMap> = None;
-        fn rpc_methods() -> &'static FnMap {
+        const FN_MAP_INIT: std::sync::Once = std::sync::Once::new();
+        static mut FN_MAP: Option<FnMap> = None;
+        fn get_fn_map() -> &'static FnMap {
             unsafe {
-                METHOD_MAP_INIT.call_once(|| {
+                FN_MAP_INIT.call_once(|| {
                     let mut map:FnMap = std::collections::HashMap::new();
 
-                    // fn reg<FN:UnaryFn>(&'static FN, methods: &mut FnMap) {
-                    //     methods.insert(FN.path(), Arc::new(|req| Box::pin(FN.on_req(req))));
-                    // }
-
+                    use krpc::svr::UnaryFn;
                     $(
                         map.insert($unary_fn.0, std::sync::Arc::new(|r| Box::pin($unary_fn.on_req(r))));
-                        // reg($unary_fn,&mut map);
                     )+
-                    METHOD_MAP = Some(map);
+                    FN_MAP = Some(map);
                 });
-                METHOD_MAP.as_ref().unwrap()
+                FN_MAP.as_ref().unwrap()
             }
         }
     }
 }
+
+
+#[macro_export]
+macro_rules! start_server {
+    () => {
+        krpc::start_server!("0.0.0.0:50051");
+    };
+    ($host_port: expr) => {
+        let addr:core::net::SocketAddr = ($host_port).parse()?;
+        println!("🟢 KRPC Server【 http://{} 】", addr);
+    
+        tonic::transport::Server::builder()
+            .add_service(krpc::svr::UnaryRpcServer::new(get_fn_map()))
+            .serve(addr)
+            .await?;
+    }
+}
+
+// #[macro_export]
+// macro_rules! current_module_name {
+//     () => {{
+//         let path = module_path!();
+//         let parts: Vec<&str> = path.split("::").collect();
+//         *parts.last().unwrap() // 获取模块名,没法转换成const
+//     }};
+// }
