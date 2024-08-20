@@ -249,7 +249,7 @@ macro_rules! reg_my_fn {
 }
 
 #[macro_export]
-macro_rules! pub_fns {
+macro_rules! _pub_fns {
 
     // hello::INSTANCE.register(&mut map);
     // let a = vec![captcha::INSTANCE,hello::INSTANCE];
@@ -290,12 +290,13 @@ macro_rules! pub_fns {
 
 
 #[macro_export]
-macro_rules! start_server {
+macro_rules! _start_server {
     () => {
-        krpc::start_server!("0.0.0.0:50051");
-    };
-    ($host_port: expr) => {
-        let addr:core::net::SocketAddr = ($host_port).parse()?;
+    //     krpc::_start_server!("0.0.0.0:50051");
+    // };
+    // ($host_port: expr) => {
+        let krpc_bind = std::env::var("KRPC_BIND").unwrap_or_else(|_| "0.0.0.0:50051".to_string());
+        let addr:core::net::SocketAddr = krpc_bind.parse()?;
         println!("🟢 KRPC Server【 http://{} 】", addr);
     
         tonic::transport::Server::builder()
@@ -304,6 +305,26 @@ macro_rules! start_server {
             .await?;
     }
 }
+
+#[macro_export]
+macro_rules! serve_rpc_mods {
+
+    ($($svc_name:ident { $($fn_name:ident),+ }),+) => {
+        
+        $(mod $svc_name;)+
+        
+        krpc::_pub_fns!($($(&$svc_name::$fn_name::FN),+),+);
+
+        #[tokio::main]
+        async fn main() -> Result<(), Box<dyn std::error::Error>> {
+
+            krpc::_start_server!();
+
+            Ok(())
+        }
+    };
+}
+
 
 // #[macro_export]
 // macro_rules! current_module_name {

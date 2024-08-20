@@ -33,22 +33,10 @@ impl UnaryFn for My {
 
 ```rust
 // src/main.rs
-// 1. 引入你的fn
-use demo::hello;
+// 发布你的mod/fns
+// (default:env)KRPC_BIND=0.0.0.0:50051
+krpc::serve_rpc_mods!(image{captcha}, demo{hello});
 
-// 2. 统一配置发布
-krpc::pub_fns!(&hello::FN,&other::FN);
-
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-
-    // 3. 启动服务
-    //default "0.0.0.0:50051"
-    krpc::start_server!();
-
-    Ok(())
-
-}
 ```
 
 
