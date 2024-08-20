@@ -297,7 +297,7 @@ macro_rules! _start_server {
     // ($host_port: expr) => {
         let krpc_bind = std::env::var("KRPC_BIND").unwrap_or_else(|_| "0.0.0.0:50051".to_string());
         let addr:core::net::SocketAddr = krpc_bind.parse()?;
-        println!("🟢 KRPC Server【 http://{} 】", addr);
+        println!("🦀 🟢 KRPC Server【 http://{} 】", addr);
     
         tonic::transport::Server::builder()
             .add_service(krpc::svr::UnaryRpcServer::new(get_fn_map()))
