@@ -1,5 +1,5 @@
 #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
-use crate::{proto, KRPC_APP_NAME};
+use super::proto;//, KRPC_APP_NAME};
 use std::collections::HashMap;
 use tonic::codegen::*;
 
@@ -179,8 +179,42 @@ impl Clone for UnaryRpcServer {
         }
     }
 }
+
+// #[const_env::from_env]
+// pub const KRPC_APP_NAME : &'static str = "env!KRPC_APP_NAME";
+
+pub const KRPC_APP_NAME : &'static str = env!("KRPC_APP_NAME");
+
 impl tonic::server::NamedService for UnaryRpcServer {
     const NAME: &'static str = &KRPC_APP_NAME;
+}
+
+use proto::{Out, OutputProto};
+use tonic::{Response, Status};
+
+// #[allow(dead_code)]
+pub fn out_error(code: i32, msg: String) -> Result<Response<OutputProto>, Status> {
+    Ok(Response::new(OutputProto {
+        code: code,
+        // data: Some(Data::Utf8(format!("\"Hello {}!\"",input )))
+        out: Some(Out::Error(msg)),
+    }))
+}
+
+// #[allow(dead_code)]
+pub fn out_json(json_data: String) -> Result<Response<OutputProto>, Status> {
+    Ok(Response::new(OutputProto {
+        code: 0,
+        out: Some(Out::Json(json_data)), // data: Some(Out::Json(format!("\"{}\"",data)))
+    }))
+}
+
+// #[allow(dead_code)]
+pub fn out_bytes(data: Vec<u8>) -> Result<Response<OutputProto>, Status> {
+    Ok(Response::new(OutputProto {
+        code: 0,
+        out: Some(Out::Bytes(data)),
+    }))
 }
 
 #[macro_export]
@@ -237,12 +271,12 @@ macro_rules! concat_cst_with_mod {
 #[macro_export]
 macro_rules! reg_my_fn {
     () => {
-        use krpc::{
+        use krpc::svr::{
             out_bytes, out_error, out_json,
-            svr::{UnaryFn, UnaryRequest, UnaryResponse},
+            UnaryFn, UnaryRequest, UnaryResponse
         };
 
-        const API_PATH: &'static str = krpc::concat_cst_with_mod!("/", &krpc::KRPC_APP_NAME);
+        const API_PATH: &'static str = krpc::concat_cst_with_mod!("/", &krpc::svr::KRPC_APP_NAME);
         pub const FN: My = My(&API_PATH);
         pub struct My(pub &'static str);
     }
@@ -335,7 +369,7 @@ macro_rules! inline_me {
                 out_json(format!("\"TODO !你好， {}, this is Rust KRPC!\"", input))
             }
         }        
-    };
+    }
 }
 
 

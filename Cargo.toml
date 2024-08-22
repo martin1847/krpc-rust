@@ -6,7 +6,6 @@ license = "Apache-2.0"
 authors = ["Martin Cong <cyy2cyy@gmail.com>"]
 
 
-
 # [lib]
 # name = "krpc"
 # path = "src/lib.rs"
@@ -26,9 +25,10 @@ const-str = "0.5.7"
 prost = "0.13.1"
 tokio = { version = "1.39.3", features = ["macros", "rt-multi-thread"] }
 tonic = "0.12.1"
+# const_env = "0.1.2"
 
-[dev-dependencies]
-krpc = { path = ".", features = ["clt"] }
+# [dev-dependencies]
+# krpc = { path = ".", features = ["clt"] }
 
 
 [build-dependencies]
