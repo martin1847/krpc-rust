@@ -10,6 +10,12 @@
 通过`gRPC`的多语言能力，选择最合适的语言。
 
 
+## 构建
+
+```bash
+KRPC_APP_NAME=youApp cargo build
+```
+
 ## 用法
 
 ```rust
