@@ -1,5 +1,11 @@
 pub mod proto;
+
+#[cfg(feature = "svr")]
 pub mod svr;
+
+#[cfg(feature = "clt")]
+pub mod clt;
+
 
 use proto::{Out, OutputProto};
 use tonic::{Response, Status};
@@ -34,29 +40,18 @@ pub const KRPC_APP_NAME : &'static str = env!("KRPC_APP_NAME");
 // pub const KRPC_APP_NAME : &'static str = option_env!("APP_NAME");
 
 
-// pub fn SET_APP_NAME(APP:&'static str ){
-//     impl tonic::server::NamedService for UnaryRpcServer {
-//         const NAME: &'static str = APP;
+// #[cfg(test)]
+// mod tests {
+//     use super::*;
+
+//     // krpc_app_name!("123");
+//     pub fn add(left: u64, right: u64) -> u64 {
+//         left + right
+//     }
+
+//     #[test]
+//     fn it_works() {
+//         let result = add(2, 2);
+//         assert_eq!(result, 4);
 //     }
 // }
-
-
-
-
-
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    // krpc_app_name!("123");
-    pub fn add(left: u64, right: u64) -> u64 {
-        left + right
-    }
-
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
-}

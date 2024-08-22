@@ -7,19 +7,29 @@ authors = ["Martin Cong <cyy2cyy@gmail.com>"]
 
 
 
-[lib]
-name = "krpc"
-path = "src/lib.rs"
+# [lib]
+# name = "krpc"
+# path = "src/lib.rs"
 
-[[bin]]
-name = "rpcurl"
-path = "src/bin/rpcurl.rs" 
+# [[bin]]
+# name = "rpcurl"
+# path = "src/bin/rpcurl.rs" 
+
+[features]
+svr = []
+clt = []
+default = ["svr"]
+# rpcurl = ["clt"]
 
 [dependencies]
 const-str = "0.5.7"
 prost = "0.13.1"
 tokio = { version = "1.39.3", features = ["macros", "rt-multi-thread"] }
 tonic = "0.12.1"
+
+[dev-dependencies]
+krpc = { path = ".", features = ["clt"] }
+
 
 [build-dependencies]
 tonic-build = "0.12.1"

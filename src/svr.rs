@@ -326,6 +326,21 @@ macro_rules! serve_rpc_mods {
 }
 
 
+#[macro_export]
+macro_rules! inline_me {
+    () => {
+        impl UnaryFn for My {
+            async fn on_req(&self, request: UnaryRequest) -> UnaryResponse {
+                let json = request.into_inner().json;
+                out_json(format!("\"TODO !你好， {}, this is Rust KRPC!\"", input))
+            }
+        }        
+    };
+}
+
+
+
+
 // #[macro_export]
 // macro_rules! current_module_name {
 //     () => {{
