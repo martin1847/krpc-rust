@@ -3,7 +3,7 @@ use tonic::codegen::http::Uri;
 /// Generated client implementations.
 use tonic::codegen::*;
 
-use super::proto::InputProto;
+use super::proto::{InputProto,OutputProto};
 
 #[derive(Debug, Clone)]
 pub struct KrpcClient<T> {
@@ -88,7 +88,7 @@ where
         &mut self,
         full_path: &str,
         request: impl tonic::IntoRequest<InputProto>,
-    ) -> std::result::Result<tonic::Response<super::OutputProto>, tonic::Status> {
+    ) -> std::result::Result<tonic::Response<OutputProto>, tonic::Status> {
         self.inner.ready().await.map_err(|e| {
             tonic::Status::new(
                 tonic::Code::Unknown,
