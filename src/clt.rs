@@ -24,18 +24,27 @@ impl KrpcClient<tonic::transport::Channel> {
     //     Ok(Self::new(conn))
     // }
 
-    pub async fn connect(url: &'static str) -> Result<Self, tonic::transport::Error>
+    pub async fn connect(url:String) -> Result<Self, tonic::transport::Error>
+    {
+        let uri = http::uri::Uri::from_maybe_shared(url).expect("please input currort http(s) url!");
+        // println!("found uri {}",uri);
+        KrpcClient::connect_uri(uri).await
+    }
+
+    pub async fn connect_uri(uri: http::uri::Uri) -> Result<Self, tonic::transport::Error>
     // where
     //     D: TryInto<tonic::transport::Endpoint>,
     //     D::Error: Into<StdError>,
     {
-        let ep = tonic::transport::Endpoint::from_static(url);
-        let scheme = ep.uri().scheme().expect(&format!("please input currort http(s) url {}",url)).as_str();
-        let ep =  if "https" == scheme {
+        let ep = tonic::transport::Endpoint::from(uri);
+        // let scheme = ep.uri().scheme().as_str();
+        // if (&uri.scheme()).expect(&format!("please input currort http(s) url {}",uri)) == &http::uri::Scheme::HTTPS {
+        // let ep =  if "https" == scheme {
+        let ep = if ep.uri().scheme() == Some(&http::uri::Scheme::HTTPS) {
             rustls::crypto::aws_lc_rs::default_provider().install_default().expect("Failed to install rustls crypto provider");
             let tls = tonic::transport::ClientTlsConfig::new()
-            // .with_native_roots()
-            .with_webpki_roots()
+            .with_native_roots()
+            // .with_webpki_roots()
             .assume_http2(true);
              // .domain_name("idemo.wangyuedaojia.com");
             ep.tls_config(tls)?
