@@ -21,11 +21,18 @@ default = ["svr"]
 # rpcurl = ["clt"]
 
 [dependencies]
+# base64 = "0.22.1"
 const-str = "0.5.7"
 prost = "0.13.1"
-tokio = { version = "1.39.3", features = ["macros", "rt-multi-thread"] }
-tonic = "0.12.1"
-# const_env = "0.1.2"
+tokio = { version = "1.39.3", features = ["macros", "rt-multi-thread"]}
+
+# https://github.com/rust-lang/rustup/issues/3400#issuecomment-1683762630
+# tonic = {version = "0.12.2",features = ["tls","tls-native-roots"]}
+# webpki-roots bakes trust roots into your binaries
+# rustls-native-certs finds trust roots from the operating system
+tonic = {version = "0.12.1",features = ["tls","tls-webpki-roots"]}
+rustls = "0.23.12"
+
 
 # [dev-dependencies]
 # krpc = { path = ".", features = ["clt"] }
