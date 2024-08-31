@@ -1,5 +1,5 @@
 #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
-use super::proto;//, KRPC_APP_NAME};
+use super::proto; //, KRPC_APP_NAME};
 use std::collections::HashMap;
 use tonic::codegen::*;
 
@@ -7,7 +7,8 @@ pub type UnaryRequest = tonic::Request<proto::InputProto>;
 pub type UnaryResponse = Result<tonic::Response<proto::OutputProto>, tonic::Status>;
 
 type BoxedFuture = Pin<Box<dyn Future<Output = UnaryResponse> + Send + 'static>>;
-pub type ArcUnaryFnPointer = Arc<dyn Fn(UnaryRequest) -> BoxedFuture + Send + Sync>;
+type _UnaryFnPointer = dyn Fn(UnaryRequest) -> BoxedFuture + Send + Sync;
+pub type BoxUnaryFnPointer = Box<_UnaryFnPointer>;
 
 /// Generated trait containing gRPC methods that should be implemented for use with UnaryRpcServer.
 // #[async_trait]
@@ -20,10 +21,6 @@ pub trait UnaryFn: Send + Sync + 'static {
     // ) -> UnaryResponse ;
 
     fn on_req(&self, request: UnaryRequest) -> impl Future<Output = UnaryResponse> + Send;
-
-    // fn register(&'static self, methods: &mut HashMap<&'static str, ArcUnaryFnPointer>) {
-    //     methods.insert(self.path(), Arc::new(|req| Box::pin(self.on_req(req))));
-    // }
 }
 
 // static  METEHODS :&'static HashMap<&'static str, AsyncUnaryFn> ;
@@ -31,14 +28,14 @@ pub trait UnaryFn: Send + Sync + 'static {
 // #[derive(Debug)]
 pub struct UnaryRpcServer {
     // inner: Arc<T>,
-    fn_map: &'static HashMap<&'static str, ArcUnaryFnPointer>,
+    fn_map: &'static HashMap<&'static str, BoxUnaryFnPointer>,
     accept_compression_encodings: EnabledCompressionEncodings,
     send_compression_encodings: EnabledCompressionEncodings,
     max_decoding_message_size: Option<usize>,
     max_encoding_message_size: Option<usize>,
 }
 impl UnaryRpcServer {
-    pub fn new(fn_map: &'static HashMap<&'static str, ArcUnaryFnPointer>) -> Self {
+    pub fn new(fn_map: &'static HashMap<&'static str, BoxUnaryFnPointer>) -> Self {
         {
             // let inner = Arc::new(inner);
             for (path, f) in fn_map {
@@ -95,16 +92,21 @@ impl UnaryRpcServer {
     }
 }
 
+// pub struct UnarySvc(pub BoxUnaryFnPointer);
+
 // #[allow(non_camel_case_types)]
-struct InnerSvc(ArcUnaryFnPointer);
+struct InnerSvc(&'static BoxUnaryFnPointer);
 impl tonic::server::UnaryService<proto::InputProto> for InnerSvc {
     type Response = proto::OutputProto;
-    type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+    type Future = BoxFuture<tonic::Response<proto::OutputProto>, tonic::Status>;
+
     fn call(&mut self, request: tonic::Request<proto::InputProto>) -> Self::Future {
-        let async_fn = Arc::clone(&self.0);
+        // let async_fn = Arc::clone(&self.0);
         // let inner = rpc.clone()
-        let fut = async move { async_fn(request).await };
-        Box::pin(fut)
+        // let fut = async move { async_fn(request).await };
+        // println!("call BoxUnaryFnPointer2: {:?}",request);
+        self.0(request)
+        // Box::pin(fut)
     }
 }
 
@@ -123,7 +125,7 @@ where
     fn call(&mut self, req: http::Request<B>) -> Self::Future {
         // let methods:&'static HashMap<&'static str, AsyncUnaryFn> = global_methods();
         match self.fn_map.get(req.uri().path()) {
-            Some(arc_fn) => {
+            Some(fn_box) => {
                 let accept_compression_encodings = self.accept_compression_encodings;
                 let send_compression_encodings = self.send_compression_encodings;
                 let max_decoding_message_size = self.max_decoding_message_size;
@@ -141,7 +143,7 @@ where
                             max_decoding_message_size,
                             max_encoding_message_size,
                         );
-                    let res = grpc.unary(InnerSvc(arc_fn.clone()), req).await;
+                    let res = grpc.unary(InnerSvc(fn_box), req).await;
                     Ok(res)
                 };
                 Box::pin(fut)
@@ -183,7 +185,7 @@ impl Clone for UnaryRpcServer {
 // #[const_env::from_env]
 // pub const KRPC_APP_NAME : &'static str = "env!KRPC_APP_NAME";
 
-pub const KRPC_APP_NAME : &'static str = env!("KRPC_APP_NAME");
+pub const KRPC_APP_NAME: &'static str = env!("KRPC_APP_NAME");
 
 impl tonic::server::NamedService for UnaryRpcServer {
     const NAME: &'static str = &KRPC_APP_NAME;
@@ -227,7 +229,7 @@ macro_rules! concat_cst_with_mod {
         const SVC_NAME: &str  = const_str::convert_ascii_case!(upper_camel,  const_str::split!(module_path!(), "::")[1]);
         //captcha
         const METHOD_NAME: &str  = const_str::split!(module_path!(), "::")[2];
-    
+
 
         const STRS: &[&str] = &[
             $($s,)+
@@ -271,15 +273,12 @@ macro_rules! concat_cst_with_mod {
 #[macro_export]
 macro_rules! reg_my_fn {
     () => {
-        use krpc::svr::{
-            out_bytes, out_error, out_json,
-            UnaryFn, UnaryRequest, UnaryResponse
-        };
+        use krpc::svr::{out_bytes, out_error, out_json, UnaryFn, UnaryRequest, UnaryResponse};
 
         const API_PATH: &'static str = krpc::concat_cst_with_mod!("/", &krpc::svr::KRPC_APP_NAME);
         pub const FN: My = My(&API_PATH);
         pub struct My(pub &'static str);
-    }
+    };
 }
 
 #[macro_export]
@@ -289,7 +288,7 @@ macro_rules! _pub_fns {
     // let a = vec![captcha::INSTANCE,hello::INSTANCE];
 
 
-    // fn register<T: UnaryFn>(map: &mut HashMap<&'static str, ArcUnaryFnPointer>, biz: &'static T) {
+    // fn register<T: UnaryFn>(map: &mut HashMap<&'static str, BoxUnaryFnPointer>, biz: &'static T) {
     //     map.insert(biz.path(), Arc::new( |r| Box::pin(biz.on_req(r))));
     // }
     // // 注册所有的bizfn(rpc method)
@@ -302,7 +301,7 @@ macro_rules! _pub_fns {
 
     ($($unary_fn: expr),+) => {
 
-        type FnMap = std::collections::HashMap<&'static str, krpc::svr::ArcUnaryFnPointer>;
+        type FnMap = std::collections::HashMap<&'static str, krpc::svr::BoxUnaryFnPointer>;
         const FN_MAP_INIT: std::sync::Once = std::sync::Once::new();
         static mut FN_MAP: Option<FnMap> = None;
         fn get_fn_map() -> &'static FnMap {
@@ -312,7 +311,7 @@ macro_rules! _pub_fns {
 
                     use krpc::svr::UnaryFn;
                     $(
-                        map.insert($unary_fn.0, std::sync::Arc::new(|r| Box::pin($unary_fn.on_req(r))));
+                        map.insert($unary_fn.0, Box::new(|r| Box::pin($unary_fn.on_req(r))));
                     )+
                     FN_MAP = Some(map);
                 });
@@ -322,31 +321,30 @@ macro_rules! _pub_fns {
     }
 }
 
-
 #[macro_export]
 macro_rules! _start_server {
     () => {
-    //     krpc::_start_server!("0.0.0.0:50051");
-    // };
-    // ($host_port: expr) => {
+        //     krpc::_start_server!("0.0.0.0:50051");
+        // };
+        // ($host_port: expr) => {
         let krpc_bind = std::env::var("KRPC_BIND").unwrap_or_else(|_| "0.0.0.0:50051".to_string());
-        let addr:core::net::SocketAddr = krpc_bind.parse()?;
+        let addr: core::net::SocketAddr = krpc_bind.parse()?;
         println!("🦀 🟢 KRPC Server【 http://{} 】", addr);
-    
+
         tonic::transport::Server::builder()
             .add_service(krpc::svr::UnaryRpcServer::new(get_fn_map()))
             .serve(addr)
             .await?;
-    }
+    };
 }
 
 #[macro_export]
 macro_rules! serve_rpc_mods {
 
     ($($svc_name:ident { $($fn_name:ident),+ }),+) => {
-        
+
         $(mod $svc_name;)+
-        
+
         krpc::_pub_fns!($($(&$svc_name::$fn_name::FN),+),+);
 
         #[tokio::main]
@@ -359,7 +357,6 @@ macro_rules! serve_rpc_mods {
     };
 }
 
-
 #[macro_export]
 macro_rules! inline_me {
     () => {
@@ -368,12 +365,9 @@ macro_rules! inline_me {
                 let json = request.into_inner().json;
                 out_json(format!("\"TODO !你好， {}, this is Rust KRPC!\"", input))
             }
-        }        
-    }
+        }
+    };
 }
-
-
-
 
 // #[macro_export]
 // macro_rules! current_module_name {
