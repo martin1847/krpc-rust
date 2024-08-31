@@ -7,12 +7,14 @@ pub type UnaryRequest = tonic::Request<proto::InputProto>;
 pub type UnaryResponse = Result<tonic::Response<proto::OutputProto>, tonic::Status>;
 
 type BoxedFuture = Pin<Box<dyn Future<Output = UnaryResponse> + Send + 'static>>;
+// type BoxedFuture = Pin<Box<dyn Future<Output = UnaryResponse>>>;
 type _UnaryFnPointer = dyn Fn(UnaryRequest) -> BoxedFuture + Send + Sync;
 pub type BoxUnaryFnPointer = Box<_UnaryFnPointer>;
 
-/// Generated trait containing gRPC methods that should be implemented for use with UnaryRpcServer.
-// #[async_trait]
-pub trait UnaryFn: Send + Sync + 'static {
+// Generated trait containing gRPC methods that should be implemented for use with UnaryRpcServer.
+// # [async_trait]
+// pub trait UnaryFn: Send + Sync + 'static {
+pub trait UnaryFn {
     // fn path(&self) -> &'static str;
 
     // async fn on_req(
@@ -20,7 +22,7 @@ pub trait UnaryFn: Send + Sync + 'static {
     //     request: UnaryRequest,
     // ) -> UnaryResponse ;
 
-    fn on_req(&self, request: UnaryRequest) -> impl Future<Output = UnaryResponse> + Send;
+    fn on_req(&self, request: UnaryRequest) -> impl Future<Output = UnaryResponse>;
 }
 
 // static  METEHODS :&'static HashMap<&'static str, AsyncUnaryFn> ;
@@ -39,7 +41,7 @@ impl UnaryRpcServer {
         {
             // let inner = Arc::new(inner);
             for (path, f) in fn_map {
-                println!("UnaryRpc Registered {:p}【 {path} 】", f);
+                println!("Unary KRPC Registered {:p}【 {path} 】", f);
             }
 
             Self {
