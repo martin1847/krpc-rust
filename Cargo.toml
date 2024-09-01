@@ -15,23 +15,25 @@ authors = ["Martin Cong <cyy2cyy@gmail.com>"]
 # path = "src/bin/rpcurl.rs" 
 
 [features]
-svr = []
-clt = []
+svr = ["dep:const-str", "dep:tonic", "tonic?/server"]
+clt = [
+    "dep:rustls",
+    "dep:tonic",
+    "tonic?/tls-native-roots",
+    #"tonic?/channel","tonic?/tls",
+    # https://github.com/rust-lang/rustup/issues/3400#issuecomment-1683762630
+]
 default = ["svr"]
-# rpcurl = ["clt"]
 
 [dependencies]
-# base64 = "0.22.1"
-const-str = "0.5.7"
 prost = "0.13.1"
-tokio = { version = "1.40.0", features = ["macros", "rt-multi-thread"]}
+tokio = { version = "1.40.0", features = ["rt-multi-thread"] }            #"macros", 
+tonic = { version = "0.12.2", default-features = false, optional = true }
 
-# https://github.com/rust-lang/rustup/issues/3400#issuecomment-1683762630
-tonic = {version = "0.12.2",features = ["tls","tls-native-roots"]}
-# webpki-roots bakes trust roots into your binaries
-# rustls-native-certs finds trust roots from the operating system
-# tonic = {version = "0.12.2",features = ["tls","tls-webpki-roots"]}
-rustls = "0.23.12"
+# client side
+rustls = { version = "0.23.12", optional = true }
+# server side
+const-str = { version = "0.5.7", optional = true }
 
 
 # [dev-dependencies]
