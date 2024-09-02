@@ -36,8 +36,8 @@ rustls = { version = "0.23.12", optional = true }
 const-str = { version = "0.5.7", optional = true }
 
 
-# [dev-dependencies]
-# krpc = { path = ".", features = ["clt"] }
+[dev-dependencies]
+krpc = { path = ".", features = ["clt","svr"] }
 
 
 [build-dependencies]
