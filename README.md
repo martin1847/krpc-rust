@@ -1,19 +1,18 @@
 
-# krpc - rust 实现
+# KRPC - rust 实现
 
-主要用来实现一些
+https://github.com/martin1847/krpc
+
+主要用来实现一些:
 
 * `CPU`密集的工作
 * 图像处理等适合`native`的
 * 二进制处理
 
-通过`gRPC`的多语言能力，选择最合适的语言。
-
-
 ## 构建
 
 ```bash
-KRPC_APP_NAME=youApp cargo build
+KRPC_APP_NAME=MyApp cargo build
 ```
 
 ## 用法
@@ -24,7 +23,7 @@ KRPC_APP_NAME=youApp cargo build
 // 1. 注册一元函数
 krpc::reg_my_fn!();
 
-// 2. 实现
+// 2. 实现，可借由 `krpc::inline_me!();` 展开。
 impl UnaryFn for My {
     async fn on_req(&self, request: UnaryRequest) -> UnaryResponse {
         let json_quoted_string = request.into_inner().json;
@@ -47,5 +46,5 @@ krpc::serve_rpc_mods!(image{captcha}, demo{hello});
 
 
 ```bash
-KRPC_APP_NAME=youApp cargo run
+KRPC_APP_NAME=MyApp cargo run
 ```
