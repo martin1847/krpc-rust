@@ -1259,6 +1259,7 @@ dependencies = [
  "hyper-util",
  "percent-encoding",
  "pin-project",
+ "prost",
  "rustls-native-certs",
  "rustls-pemfile",
  "socket2",
