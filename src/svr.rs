@@ -344,10 +344,10 @@ macro_rules! serve_rpc_mods {
 macro_rules! inline_me {
     () => {
         krpc::reg_my_fn!();
-        
+
         impl UnaryFn for My {
             async fn on_req(&self, request: UnaryRequest) -> UnaryResponse {
-                let json = request.into().json;
+                let json = request.into_inner().json;
                 out_json(format!("\"TODO ! Hello， {}, this is Rust KRPC!\"", json))
             }
         }
