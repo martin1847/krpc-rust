@@ -343,6 +343,8 @@ macro_rules! serve_rpc_mods {
 #[macro_export]
 macro_rules! inline_me {
     () => {
+        krpc::reg_my_fn!();
+        
         impl UnaryFn for My {
             async fn on_req(&self, request: UnaryRequest) -> UnaryResponse {
                 let json = request.into().json;
