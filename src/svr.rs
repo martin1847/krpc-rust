@@ -345,8 +345,8 @@ macro_rules! inline_me {
     () => {
         impl UnaryFn for My {
             async fn on_req(&self, request: UnaryRequest) -> UnaryResponse {
-                let json = request.into_inner().json;
-                out_json(format!("\"TODO !你好， {}, this is Rust KRPC!\"", input))
+                let json = request.into().json;
+                out_json(format!("\"TODO ! Hello， {}, this is Rust KRPC!\"", json))
             }
         }
     };
