@@ -101,7 +101,7 @@ where
     B: Body + Send + 'static,
     B::Error: Into<StdError> + Send + 'static,
 {
-    type Response = http::Response<tonic::body::BoxBody>;
+    type Response = http::Response<tonic::body::Body>;
     type Error = std::convert::Infallible;
     type Future = BoxFuture<Self::Response, Self::Error>;
     fn poll_ready(&mut self, _cx: &mut Context<'_>) -> Poll<std::result::Result<(), Self::Error>> {
@@ -117,7 +117,7 @@ where
                 // let inner = rpc_method.clone().as_ref().as_any().downcast_ref::<T>;
                 let fut = async move {
                     // let method = ;
-                    let codec = tonic::codec::ProstCodec::default();
+                    let codec = tonic_prost::ProstCodec::default();
                     let mut grpc = tonic::server::Grpc::new(codec)
                         .apply_compression_config(
                             accept_compression_encodings,
@@ -140,7 +140,7 @@ where
                         http::header::CONTENT_TYPE,
                         tonic::metadata::GRPC_CONTENT_TYPE,
                     )
-                    .body(empty_body())
+                    .body(tonic::body::Body::default())
                     .unwrap())
             }),
         }

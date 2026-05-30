@@ -18,8 +18,7 @@ KRPC_APP_NAME=MyApp cargo build
 ## 用法
 
 ```rust
-//src/demo/hello.rs
-//rpcurl $REMOTE/$KRPC_APP_NAME/Demo/hello  -d '"Martin你好"'
+//examples/demo/hello.rs
 // 1. 注册一元函数
 krpc::reg_my_fn!();
 
@@ -37,7 +36,7 @@ impl UnaryFn for My {
 
 
 ```rust
-// src/main.rs
+// examples/demo-server.rs
 // 发布你的mod/fns
 // (default:env)KRPC_BIND=0.0.0.0:50051
 krpc::serve_rpc_mods!(image{captcha}, demo{hello});
@@ -46,5 +45,21 @@ krpc::serve_rpc_mods!(image{captcha}, demo{hello});
 
 
 ```bash
-KRPC_APP_NAME=MyApp cargo run
+KRPC_APP_NAME=demo-server cargo run --example demo-server --features svr
+# export REMOTE=http://127.0.0.1:50051
+rpcurl $REMOTE/$KRPC_APP_NAME/Demo/hello  -d '"Martin你好"'
+```
+
+## 集成测试
+
+先在一个终端启动 demo server：
+
+```bash
+KRPC_APP_NAME=demo-server KRPC_BIND=0.0.0.0:50051 cargo run --example demo-server --features svr
+```
+
+再在另一个终端运行集成测试：
+
+```bash
+KRPC_APP_NAME=test-server cargo test --test integration_test --all-features
 ```

@@ -8,7 +8,7 @@ async fn test_clt_hello() -> Result<(), Box<dyn std::error::Error>> {
     let mut client = KrpcClient::connect("http://0.0.0.0:50051").await?;
 
    
-    let method = "/test-server/Demo/str";
+    let method = "/demo-server/Demo/hello";
 
     let response = client.call(method,input_str("\"Rust1\"")).await?;
 

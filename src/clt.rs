@@ -57,7 +57,7 @@ impl KrpcClient<tonic::transport::Channel> {
 
 impl<T> KrpcClient<T>
 where
-    T: tonic::client::GrpcService<tonic::body::BoxBody>,
+    T: tonic::client::GrpcService<tonic::body::Body>,
     T::Error: Into<StdError>,
     T::ResponseBody: Body<Data = Bytes> + Send + 'static,
     <T::ResponseBody as Body>::Error: Into<StdError> + Send,
@@ -76,12 +76,12 @@ where
         F: tonic::service::Interceptor,
         T::ResponseBody: Default,
         T: tonic::codegen::Service<
-            http::Request<tonic::body::BoxBody>,
+            http::Request<tonic::body::Body>,
             Response = http::Response<
-                <T as tonic::client::GrpcService<tonic::body::BoxBody>>::ResponseBody,
+                <T as tonic::client::GrpcService<tonic::body::Body>>::ResponseBody,
             >,
         >,
-        <T as tonic::codegen::Service<http::Request<tonic::body::BoxBody>>>::Error:
+        <T as tonic::codegen::Service<http::Request<tonic::body::Body>>>::Error:
             Into<StdError> + Send + Sync,
     {
         KrpcClient::new(InterceptedService::new(inner, interceptor))
@@ -130,8 +130,8 @@ where
         })?;
         // let req = tonic::Request::new(InputProto { json: json_data.into() });
         // request: impl tonic::IntoRequest<InputProto>
-        let codec: tonic::codec::ProstCodec<InputProto, OutputProto> =
-            tonic::codec::ProstCodec::default();
+        let codec: tonic_prost::ProstCodec<InputProto, OutputProto> =
+            tonic_prost::ProstCodec::default();
         let path = http::uri::PathAndQuery::try_from(full_path).unwrap();
         // let mut req = request.into_request();
         // req.extensions_mut().insert(GrpcMethod::new("", ""));
@@ -142,4 +142,8 @@ where
 
 pub fn req_from(json: &str) -> tonic::Request<InputProto> {
     tonic::Request::new(InputProto { json: json.to_owned() })
+}
+
+pub fn input_str(json: &str) -> tonic::Request<InputProto> {
+    req_from(json)
 }

@@ -2,8 +2,10 @@
 name = "krpc"
 version = "0.1.0"
 edition = "2024"
+rust-version = "1.95.0"
 license = "Apache-2.0"
 authors = ["Martin Cong <cyy2cyy@gmail.com>"]
+exclude = ["examples/"]
 
 
 # [lib]
@@ -15,10 +17,11 @@ authors = ["Martin Cong <cyy2cyy@gmail.com>"]
 # path = "src/bin/rpcurl.rs" 
 
 [features]
-svr = ["dep:const-str", "dep:tonic", "tonic?/server"]
+svr = ["dep:const-str", "dep:tonic", "dep:tonic-prost", "tonic?/router", "tonic?/server"]
 clt = [
     "dep:rustls",
     "dep:tonic",
+    "dep:tonic-prost",
     "tonic?/tls-native-roots",
     #"tonic?/channel","tonic?/tls",
     # https://github.com/rust-lang/rustup/issues/3400#issuecomment-1683762630
@@ -26,14 +29,15 @@ clt = [
 default = ["svr"]
 
 [dependencies]
-prost = "0.13.1"
-tokio = { version = "1.40.0", features = ["rt-multi-thread"] }            #"macros", 
-tonic = { version = "0.12.2", default-features = false, features = ["codegen","prost"] ,optional = true }
+prost = "0.14.3"
+tokio = { version = "1.52.3", features = ["rt-multi-thread", "macros"] }
+tonic = { version = "0.14.6", default-features = false, features = ["codegen"] ,optional = true }
+tonic-prost = { version = "0.14.6", optional = true }
 
 # client side
-rustls = { version = "0.23.12", optional = true }
+rustls = { version = "0.23.40", optional = true }
 # server side
-const-str = { version = "0.5.7", optional = true }
+const-str = { version = "1.1.0", optional = true }
 
 
 [dev-dependencies]
@@ -41,4 +45,5 @@ krpc = { path = ".", features = ["clt","svr"] }
 
 
 [build-dependencies]
-tonic-build = "0.12.2"
+tonic-build = "0.14.6"
+tonic-prost-build = "0.14.6"
