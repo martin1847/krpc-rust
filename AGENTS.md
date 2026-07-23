@@ -1,67 +1,50 @@
-# Repository Agent Guide
+# krpc-rust — Agent Guide
 
-## Source Of Truth Priority
+Rust runtime of the KRPC protocol: async server + client over the same
+gRPC/HTTP-2 wire as the Java reference implementation. Capability cluster:
+umbrella `docs/modules/polyglot-runtimes.md`.
 
-1. User instructions in the active task.
-2. This `AGENTS.md`.
-3. `docs/INDEX.md` and linked ADR, module, and roadmap files.
-4. Existing code and tests.
+## Scope
 
-`.ai/` is local-only context and is ignored by git.
+- FOR: a language-idiomatic Rust server/client runtime wire-compatible with
+  `krpc` — server in `src/svr.rs`, client in `src/clt.rs`, protocol layer in
+  `src/proto.rs` + `proto/internal.proto` + `build.rs`.
+- NOT FOR: defining protocol/contract semantics (those follow `krpc`);
+  application business logic, CLI tooling (`rpcurl` lives in `krpc-crates`), or
+  deployment configuration.
+- Maintained-only: work happens on concrete pressure (a real bug / a real
+  consumer need), not speculative feature parity.
 
-When sources conflict, stop and surface the conflict before editing.
+## Ecosystem rules
 
-## Status Vocabularies
+- Wire compatibility originates in `krpc`; this repo follows the wire, never
+  forks the protocol, never leads a wire change (NS-2).
+- Tier-2 maintained: touch only on a concrete need, not for speculative parity
+  (NS-8).
+- Long-term direction: the KRPC umbrella workspace `docs/NORTH_STAR.md` (cite
+  principles by NS-ID when relevant).
+- Repo-internal SoT: `docs/INDEX.md` and the linked ADR / module / roadmap
+  files. ADR status (`proposed`/`accepted`/`deprecated`/`superseded`) and
+  roadmap status (`proposed`/`active`/`deferred`/`obsolete`/`rejected`/
+  `completed`) are separate vocabularies — never mix them.
+- `.ai/` is local-only context and is ignored by git.
 
-ADR status values: `proposed`, `accepted`, `deprecated`, `superseded`.
+## Build & test
 
-Roadmap and evolution status values: `proposed`, `active`, `deferred`, `obsolete`, `rejected`, `completed`.
+- Prefix shell commands with `rtk`; use `cargo` through `rtk cargo ...`.
+- `rtk cargo build` (not verified).
+- `rtk cargo test` (not verified).
+- Keep Rust comments and documentation in English unless the surrounding file
+  clearly uses another language.
 
-Do not mix these vocabularies.
+## Discipline
 
-## Work Modes
-
-DO without asking for reversible local work: read files, edit local files, add tests, run read-only commands, and run local validation.
-
-THINK before coding for Rust edition, dependency, API, or architecture changes. State assumptions, tradeoffs, and simpler alternatives before implementation.
-
-REQUIRE APPROVAL before irreversible or externally visible work: force push, branch deletion, production deployment, destructive cleanup, migrations, or external messages.
-
-Push back explicitly when a plan has a real technical flaw, there is a materially simpler path, or work is about to touch production.
-
-## Module Boundaries
-
-- Client module: `src/clt.rs`.
-- Server module: `src/svr.rs`.
-- Protocol module: `src/proto.rs`, `proto/internal.proto`, `build.rs`.
-
-Do not add application business logic, CLI code, or deployment configuration to this crate without a new ADR or an accepted roadmap item.
-
-## Before Adding A New Component
-
-- Prefer extending the existing module file when the responsibility fits.
-- Add a new component only when it has a distinct stable responsibility.
-- Add or update the module doc under `docs/modules/` when a new component changes ownership boundaries.
-
-## Code Traceability
-
-Every non-trivial change should map to:
-
-- An ADR for boundary or strategy changes.
-- A roadmap item for planned work.
-- A module doc for ownership and scope.
-
-Keep edits surgical. Do not reformat or refactor adjacent code unless required by the requested change.
-
-## Tooling Preferences
-
-- Prefix shell commands with `rtk`.
-- Use `cargo` through `rtk cargo ...`.
-- Keep Rust comments and documentation in English unless the surrounding file clearly uses another language.
-- Do not add AI-generated signatures to git commits.
-
-## Validation And Completion
-
-Report what changed, what validation ran, what did not run, and any remaining assumptions or risks.
-
-Do not claim a command passed unless it was actually run and succeeded.
+- Behavior changes hide behind a flag, default OFF. No drive-by refactors or
+  format churn; keep edits surgical.
+- Boundary/strategy changes need an ADR; planned work maps to a roadmap item;
+  ownership changes update the module doc under `docs/modules/`.
+- Secrets, internal hostnames/IPs, topology never enter the committed tree,
+  logs, or docs.
+- Commits stay local until the owner approves a push. No AI signature lines.
+- Report what changed, what validation ran, what did not run, and remaining
+  risks; never claim a command passed unless it actually ran.
